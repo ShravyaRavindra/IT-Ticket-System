@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>IT Service Desk</title>
+
+    <!-- CSS -->
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+</head>
+
+<body>
+
+    <!-- =========================
+         TOP NAVIGATION
+    ========================== -->
+
+    <header class="topbar">
+
+        <div class="brand">
+
+            <div class="brand-icon">
+                IT
+            </div>
+
+            <div>
+                <h1>IT Service Desk</h1>
+                <p>Ticket Management System</p>
+            </div>
+
+        </div>
+
+
+        <div class="user-info">
+
+            <span>Employee</span>
+
+            <strong>Shravya</strong>
+
+        </div>
+
+    </header>
+
+
+    <!-- =========================
+         MAIN CONTENT
+    ========================== -->
+
+    <main class="container">
+
+
+        <!-- Welcome section -->
+
+        <section class="welcome">
+
+            <div>
+
+                <p class="eyebrow">
+                    EMPLOYEE PORTAL
+                </p>
+
+                <h2>
+                    Welcome back, Shravya
+                </h2>
+
+                <p>
+                    Create and track your IT support requests.
+                </p>
+
+            </div>
+
+
+            <button
+                class="primary-button"
+                onclick="openTicketForm()"
+            >
+                + Create Ticket
+            </button>
+
+        </section>
+
+
+
+        <!-- =========================
+             STATISTICS
+        ========================== -->
+
+        <section class="stats">
+
+
+            <!-- Total -->
+
+            <div class="stat-card">
+
+                <span>
+                    Total Tickets
+                </span>
+
+                <strong>
+                    {{ tickets|length }}
+                </strong>
+
+            </div>
+
+
+            <!-- Open -->
+
+            <div class="stat-card">
+
+                <span>
+                    Open
+                </span>
+
+                <strong>
+                    {{
+                        tickets
+                        |selectattr("status", "ne", "CLOSED")
+                        |list
+                        |length
+                    }}
+                </strong>
+
+            </div>
+
+
+            <!-- Resolved -->
+
+            <div class="stat-card">
+
+                <span>
+                    Resolved
+                </span>
+
+                <strong>
+                    {{
+                        tickets
+                        |selectattr("status", "equalto", "RESOLVED")
+                        |list
+                        |length
+                    }}
+                </strong>
+
+            </div>
+
+
+            <!-- Closed -->
+
+            <div class="stat-card">
+
+                <span>
+                    Closed
+                </span>
+
+                <strong>
+                    {{
+                        tickets
+                        |selectattr("status", "equalto", "CLOSED")
+                        |list
+                        |length
+                    }}
+                </strong>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =========================
+             TICKET TABLE
+        ========================== -->
+
+        <section class="ticket-section">
+
+
+            <div class="section-header">
+
+                <div>
+
+                    <h3>
+                        My Tickets
+                    </h3>
+
+                    <p>
+                        Track your support requests
+                    </p>
+
+                </div>
+
+            </div>
+
+
+
+            {% if tickets %}
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                ID
+                            </th>
+
+                            <th>
+                                Ticket
+                            </th>
+
+                            <th>
+                                Category
+                            </th>
+
+                            <th>
+                                Priority
+                            </th>
+
+                            <th>
+                                Status
+                            </th>
+
+                            <th>
+                                Created
+                            </th>
+
+                            <th>
+                                Action
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for ticket in tickets %}
+
+                        <tr>
+
+
+                            <!-- Ticket ID -->
+
+                            <td>
+
+                                <strong>
+                                    #{{ ticket.ticket_id }}
+                                </strong>
+
+                            </td>
+
+
+
+                            <!-- Ticket title -->
+
+                            <td>
+
+                                <div class="ticket-title">
+
+                                    {{ ticket.title }}
+
+                                </div>
+
+                            </td>
+
+
+
+                            <!-- Category -->
+
+                            <td>
+
+                                {{ ticket.category }}
+
+                            </td>
+
+
+
+                            <!-- Priority -->
+
+                            <td>
+
+                                <span
+                                    class="priority priority-{{ ticket.priority|lower }}"
+                                >
+
+                                    {{ ticket.priority }}
+
+                                </span>
+
+                            </td>
+
+
+
+                            <!-- Status -->
+
+                            <td>
+
+                                <span
+                                    class="status status-{{ ticket.status|lower }}"
+                                >
+
+                                    {{ ticket.status.replace("_", " ") }}
+
+                                </span>
+
+                            </td>
+
+
+
+                            <!-- Action -->
+
+                            <td>
+
+
+                                {% if ticket.status == "RESOLVED" and not ticket.user_confirmed %}
+
+                                <button
+                                    class="primary-button"
+                                    onclick="confirmTicket({{ ticket.ticket_id }})"
+                                >
+
+                                    Confirm Resolution
+
+                                </button>
+
+
+                                {% elif ticket.status == "RESOLVED" and ticket.user_confirmed %}
+
+                                <span>
+
+                                    Confirmation received
+
+                                </span>
+
+
+                                {% elif ticket.status == "CLOSED" %}
+
+                                <span>
+
+                                    Completed
+
+                                </span>
+
+
+                                {% else %}
+
+                                <span>
+
+                                    —
+
+                                </span>
+
+                                {% endif %}
+
+
+                            </td>
+
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+
+            {% else %}
+
+
+            <!-- No tickets -->
+
+            <div class="empty-state">
+
+                <div class="empty-icon">
+                    +
+                </div>
+
+
+                <h3>
+                    No tickets yet
+                </h3>
+
+
+                <p>
+                    Create your first IT support ticket.
+                </p>
+
+
+                <button
+                    class="primary-button"
+                    onclick="openTicketForm()"
+                >
+
+                    Create Ticket
+
+                </button>
+
+            </div>
+
+
+            {% endif %}
+
+
+        </section>
+
+
+    </main>
+
+
+
+    <!-- =========================
+         CREATE TICKET MODAL
+    ========================== -->
+
+    <div
+        id="ticketModal"
+        class="modal"
+    >
+
+
+        <div class="modal-content">
+
+
+            <!-- Modal header -->
+
+            <div class="modal-header">
+
+
+                <div>
+
+                    <p class="eyebrow">
+                        NEW REQUEST
+                    </p>
+
+                    <h2>
+                        Create IT Ticket
+                    </h2>
+
+                </div>
+
+
+                <button
+                    class="close-button"
+                    onclick="closeTicketForm()"
+                >
+
+                    ×
+
+                </button>
+
+
+            </div>
+
+
+
+            <!-- Ticket form -->
+
+            <form id="ticketForm">
+
+
+                <!-- Title -->
+
+                <div class="form-group">
+
+                    <label for="title">
+                        Ticket Title
+                    </label>
+
+
+                    <input
+                        type="text"
+                        id="title"
+                        name="title"
+                        placeholder="e.g. Laptop Wi-Fi not working"
+                        required
+                    >
+
+                </div>
+
+
+
+                <!-- Description -->
+
+                <div class="form-group">
+
+                    <label for="description">
+                        Description
+                    </label>
+
+
+                    <textarea
+                        id="description"
+                        name="description"
+                        rows="5"
+                        placeholder="Describe the issue..."
+                        required
+                    ></textarea>
+
+                </div>
+
+
+
+                <!-- Category + Priority -->
+
+                <div class="form-row">
+
+
+                    <!-- Category -->
+
+                    <div class="form-group">
+
+                        <label for="category">
+                            Category
+                        </label>
+
+
+                        <select
+                            id="category"
+                            name="category"
+                            required
+                        >
+
+                            <option value="">
+                                Select category
+                            </option>
+
+                            <option value="NETWORK">
+                                Network
+                            </option>
+
+                            <option value="HARDWARE">
+                                Hardware
+                            </option>
+
+                            <option value="SOFTWARE">
+                                Software
+                            </option>
+
+                            <option value="ACCESS">
+                                Access
+                            </option>
+
+                            <option value="OTHER">
+                                Other
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+
+                    <!-- Priority -->
+
+                    <div class="form-group">
+
+                        <label for="priority">
+                            Priority
+                        </label>
+
+
+                        <select
+                            id="priority"
+                            name="priority"
+                            required
+                        >
+
+                            <option value="LOW">
+                                Low
+                            </option>
+
+                            <option
+                                value="MEDIUM"
+                                selected
+                            >
+                                Medium
+                            </option>
+
+                            <option value="HIGH">
+                                High
+                            </option>
+
+                            <option value="CRITICAL">
+                                Critical
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                </div>
+
+
+
+                <!-- Form message -->
+
+                <div
+                    id="formMessage"
+                    class="form-message"
+                ></div>
+
+
+
+                <!-- Submit -->
+
+                <button
+                    type="submit"
+                    class="primary-button full-width"
+                >
+
+                    Submit Ticket
+
+                </button>
+
+
+            </form>
+
+
+        </div>
+
+
+    </div>
+
+
+
+    <!-- =========================
+         JAVASCRIPT
+    ========================== -->
+
+    <script
+        src="{{ url_for('static', filename='js/script.js') }}"
+    ></script>
+
+
+</body>
+
+</html>

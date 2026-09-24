@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Agent Dashboard</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+
+</head>
+
+
+<body>
+
+<header class="topbar">
+
+    <div class="brand">
+
+        <div class="brand-icon">
+            IT
+        </div>
+
+        <div>
+
+            <h1>IT Service Desk</h1>
+
+            <p>Agent Dashboard</p>
+
+        </div>
+
+    </div>
+
+
+    <div class="user-info">
+
+        <span>Logged in as</span>
+
+        <strong>Agent</strong>
+
+    </div>
+
+</header>
+
+
+<main class="container">
+
+
+    <section class="welcome">
+
+        <div>
+
+            <p class="eyebrow">
+                SUPPORT TEAM
+            </p>
+
+            <h2>
+                Agent Dashboard
+            </h2>
+
+            <p>
+                Manage and resolve employee support requests.
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <section class="stats">
+
+        <div class="stat-card">
+
+            <span>New</span>
+
+            <strong>
+                {{
+                    tickets
+                    |selectattr("status", "equalto", "NEW")
+                    |list
+                    |length
+                }}
+            </strong>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <span>Assigned</span>
+
+            <strong>
+                {{
+                    tickets
+                    |selectattr("status", "equalto", "ASSIGNED")
+                    |list
+                    |length
+                }}
+            </strong>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <span>In Progress</span>
+
+            <strong>
+                {{
+                    tickets
+                    |selectattr("status", "equalto", "IN_PROGRESS")
+                    |list
+                    |length
+                }}
+            </strong>
+
+        </div>
+
+
+        <div class="stat-card">
+
+            <span>Resolved</span>
+
+            <strong>
+                {{
+                    tickets
+                    |selectattr("status", "equalto", "RESOLVED")
+                    |list
+                    |length
+                }}
+            </strong>
+
+        </div>
+
+    </section>
+
+
+    <section class="ticket-section">
+
+        <div class="section-header">
+
+            <h3>
+                Support Tickets
+            </h3>
+
+            <p>
+                Manage incoming employee requests
+            </p>
+
+        </div>
+
+
+        <div class="table-wrapper">
+
+            <table>
+
+                <thead>
+
+                <tr>
+
+                    <th>ID</th>
+
+                    <th>Ticket</th>
+
+                    <th>Employee</th>
+
+                    <th>Priority</th>
+
+                    <th>Status</th>
+
+                    <th>Action</th>
+
+                </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                {% for ticket in tickets %}
+
+                <tr>
+
+                    <td>
+                        <strong>
+                            #{{ ticket.ticket_id }}
+                        </strong>
+                    </td>
+
+
+                    <td>
+
+                        <div class="ticket-title">
+                            {{ ticket.title }}
+                        </div>
+
+                        <small>
+                            {{ ticket.category }}
+                        </small>
+
+                    </td>
+
+
+                    <td>
+                        {{ ticket.employee_name }}
+                    </td>
+
+
+                    <td>
+
+                        <span
+                            class="priority priority-{{ ticket.priority|lower }}"
+                        >
+                            {{ ticket.priority }}
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        <span
+                            class="status status-{{ ticket.status|lower }}"
+                        >
+                            {{ ticket.status.replace("_", " ") }}
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        {% if ticket.status == "NEW" %}
+
+                        <button
+                            class="primary-button"
+                            onclick="openAssignModal({{ ticket.ticket_id }})"
+                        >
+                            Assign
+                        </button>
+
+
+                        {% elif ticket.status == "ASSIGNED" %}
+
+                        <button
+                            class="primary-button"
+                            onclick="updateStatus({{ ticket.ticket_id }}, 'IN_PROGRESS')"
+                        >
+                            Start Work
+                        </button>
+
+
+                        {% elif ticket.status == "IN_PROGRESS" %}
+
+                        <button
+                            class="primary-button"
+                            onclick="updateStatus({{ ticket.ticket_id }}, 'RESOLVED')"
+                        >
+                            Resolve
+                        </button>
+
+
+                        {% elif ticket.status == "RESOLVED" %}
+
+                        <span>
+                            Waiting for confirmation
+                        </span>
+
+
+                        {% elif ticket.status == "CLOSED" %}
+
+                        <span>
+                            Completed
+                        </span>
+
+                        {% endif %}
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<!-- ASSIGN MODAL -->
+
+<div
+    id="assignModal"
+    class="modal"
+>
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <div>
+
+                <p class="eyebrow">
+                    TICKET ASSIGNMENT
+                </p>
+
+                <h2>
+                    Assign Ticket
+                </h2>
+
+            </div>
+
+
+            <button
+                class="close-button"
+                onclick="closeAssignModal()"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <input
+            type="hidden"
+            id="assignTicketId"
+        >
+
+
+        <div class="form-group">
+
+            <label>
+                Assign to
+            </label>
+
+
+            <select id="agentSelect">
+
+                <option value="">
+                    Select support agent
+                </option>
+
+                {% for agent in agents %}
+
+                <option value="{{ agent.user_id }}">
+
+                    {{ agent.name }}
+
+                </option>
+
+                {% endfor %}
+
+            </select>
+
+        </div>
+
+
+        <button
+            class="primary-button full-width"
+            onclick="assignTicket()"
+        >
+            Assign Ticket
+        </button>
+
+
+        <div
+            id="assignMessage"
+            class="form-message"
+        ></div>
+
+    </div>
+
+</div>
+
+
+<script
+    src="{{ url_for('static', filename='js/agent.js') }}"
+></script>
+
+
+</body>
+
+</html>
