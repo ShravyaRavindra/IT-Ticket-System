@@ -31,6 +31,7 @@ def initialize_database():
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             resolved_at TIMESTAMP,
             closed_at TIMESTAMP,
+            user_confirmed INTEGER NOT NULL DEFAULT 0,
 
             FOREIGN KEY (created_by)
                 REFERENCES users(user_id),
