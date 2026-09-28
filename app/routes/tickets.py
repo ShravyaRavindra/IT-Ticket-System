@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for
 from app.database import get_db_connection
 
 ticket_bp = Blueprint("tickets", __name__)
@@ -528,8 +528,71 @@ def close_ticket(ticket_id):
 
     finally:
         connection.close()
+
+@ticket_bp.route("/login", methods=["GET", "POST"])
+def login():
+
+    if request.method == "GET":
+        return render_template("login.html")
+
+    email = request.form.get("email", "").strip()
+    password = request.form.get("password", "")
+
+    if not email or not password:
+        return render_template(
+            "login.html",
+            error="Email and password are required."
+        )
+
+    connection = get_db_connection()
+
+    try:
+        user = connection.execute(
+            """
+            SELECT user_id, name, email, password, role
+            FROM users
+            WHERE email = ?
+            """,
+            (email,)
+        ).fetchone()
+
+        if user is None or user["password"] != password:
+            return render_template(
+                "login.html",
+                error="Invalid email or password."
+            )
+
+        session["user_id"] = user["user_id"]
+        session["name"] = user["name"]
+        session["email"] = user["email"]
+        session["role"] = user["role"]
+
+        if user["role"] == "AGENT":
+            return redirect(url_for("tickets.agent_dashboard"))
+
+        if user["role"] == "ADMIN":
+            return redirect(url_for("tickets.home"))
+
+        return redirect(url_for("tickets.home"))
+
+    finally:
+        connection.close()
+
+@ticket_bp.route("/logout")
+def logout():
+
+    session.clear()
+
+    return redirect(url_for("tickets.login"))
+
 @ticket_bp.route("/agent")
 def agent_dashboard():
+    # Only logged-in agents and admins can access the agent dashboard
+    if "user_id" not in session:
+        return redirect(url_for("tickets.login"))
+
+    if session.get("role") not in ("AGENT", "ADMIN"):
+        return redirect(url_for("tickets.home"))
     connection = get_db_connection()
 
     tickets = connection.execute(

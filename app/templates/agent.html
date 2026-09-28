@@ -389,6 +389,112 @@
     src="{{ url_for('static', filename='js/agent.js') }}"
 ></script>
 
+<script>
+function openAssignModal(ticketId) {
+    document.getElementById("assignTicketId").value = ticketId;
+
+    const modal = document.getElementById("assignModal");
+    modal.classList.add("active");
+
+    const message = document.getElementById("assignMessage");
+    message.textContent = "";
+    message.classList.remove("show");
+}
+
+
+function closeAssignModal() {
+    const modal = document.getElementById("assignModal");
+    modal.classList.remove("active");
+
+    document.getElementById("assignTicketId").value = "";
+
+    const message = document.getElementById("assignMessage");
+    message.textContent = "";
+    message.classList.remove("show");
+}
+
+
+async function assignTicket() {
+
+    const ticketId =
+        document.getElementById("assignTicketId").value;
+
+    const assignedTo =
+        document.getElementById("agentSelect").value;
+
+    const message =
+        document.getElementById("assignMessage");
+
+
+    if (!ticketId) {
+        message.textContent = "Ticket ID is missing.";
+        message.classList.add("show");
+        return;
+    }
+
+
+    if (!assignedTo) {
+        message.textContent = "Please select a support agent.";
+        message.classList.add("show");
+        return;
+    }
+
+
+    try {
+
+        const response = await fetch(
+            `/api/tickets/${ticketId}/assign`,
+            {
+                method: "PUT",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+                    assigned_to: Number(assignedTo)
+                })
+            }
+        );
+
+
+        const result = await response.json();
+
+
+        if (!response.ok) {
+
+            message.textContent =
+                result.error || "Failed to assign ticket.";
+
+            message.classList.add("show");
+
+            return;
+        }
+
+
+        message.textContent =
+            "Ticket assigned successfully.";
+
+        message.classList.add("show");
+
+
+        setTimeout(function () {
+            window.location.reload();
+        }, 800);
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        message.textContent =
+            "Unable to connect to the server.";
+
+        message.classList.add("show");
+    }
+}
+</script>
+
 
 </body>
 

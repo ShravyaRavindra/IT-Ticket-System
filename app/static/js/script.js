@@ -36,7 +36,7 @@ form.addEventListener("submit", async function (event) {
         priority: document.getElementById("priority").value,
 
         // Temporary logged-in employee
-        created_by: 1
+        created_by: currentUserId
     };
 
 
